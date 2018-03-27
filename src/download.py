@@ -57,7 +57,7 @@ def DownloadImage(key_url):
     try:
         # print('Trying to get %s.' % url)
         http = urllib3.PoolManager()
-        response = http.request('GET', url)
+        response = http.request('GET', url, timeout=10)
         image_data = response.data
     except:
         print('Warning: Could not download image %s from %s' % (key, url))
