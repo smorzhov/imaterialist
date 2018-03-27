@@ -34,6 +34,7 @@ RUN apt update -qq && \
     pandas \
     Pillow \
     scikit-learn \
+    urlib3 \
     tqdm
 
 WORKDIR /imaterialist
