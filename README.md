@@ -14,7 +14,7 @@ You will need the following things properly installed on your computer.
 
 ## Running
 
-Remember that Docker container has the Python version 2.7.12!
+Remember that Docker container has the Python version 3.5.2!
 
 1. Download data
 1. Download pretrained .
@@ -26,7 +26,13 @@ Remember that Docker container has the Python version 2.7.12!
     ```bash
     nvidia-docker run -v $PWD/src:/imaterialist -dt --name imc sm_keras_tf_py3:gpu /bin/bash
     ```
-3. Training
+3. Download images
+    ```
+    nvidia-docker exec tcc python3 download.py data/test.json data/raw/test
+    nvidia-docker exec tcc python3 download.py data/train.json data/raw/train
+    nvidia-docker exec tcc python3 download.py data/validation.json data/raw/validation
+    ```
+4. Training
     ```bash
-    nvidia-docker exec tcc python train.py [-h]
+    nvidia-docker exec tcc python3 train.py [-h]
     ```
