@@ -27,14 +27,15 @@ RUN apt update -qq && \
     rm -rf /var/lib/apt/lists/* && \
     chmod +x /imaterialist && \
     pip --no-cache-dir uninstall -y tensorflow && \
-    pip3 --no-cache-dir install --upgrade \
+    python3 -m pip --no-cache-dir install --upgrade pip && \
+    python3 -m pip --no-cache-dir install --upgrade \
     tensorflow-gpu \
     keras \
     matplotlib \
     pandas \
     Pillow \
     scikit-learn \
-    urlib3 \
+    urllib3 \
     tqdm
 
 WORKDIR /imaterialist
