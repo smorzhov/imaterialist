@@ -28,11 +28,11 @@ Remember that Docker container has the Python version 3.5.2!
     ```
 3. Download images
     ```
-    nvidia-docker exec tcc python3 download.py data/test.json data/raw/test
-    nvidia-docker exec tcc python3 download.py data/train.json data/raw/train
-    nvidia-docker exec tcc python3 download.py data/validation.json data/raw/validation
+    nvidia-docker exec imc python3 download.py data/test.json data/raw/test
+    nvidia-docker exec imc python3 download.py data/train.json data/raw/train
+    nvidia-docker exec imc python3 download.py data/validation.json data/raw/validation
     ```
 4. Training
     ```bash
-    nvidia-docker exec tcc python3 train.py [-h]
+    nvidia-docker exec imc python3 train.py [-h]
     ```
