@@ -58,19 +58,19 @@ def DownloadImage(key_url):
         response = http.request('GET', url, timeout=10)
         image_data = response.data
     except:
-        print('Warning: Could not download image %s from %s' % (key, url))
+        print('Warning: Could not download image %s from %s' % (os.path.basename(filename), url))
         return
 
     try:
         pil_image = Image.open(BytesIO(image_data))
     except:
-        print('Warning: Failed to parse image %s %s' % (key, url))
+        print('Warning: Failed to parse image %s %s' % (os.path.basename(filename), url))
         return
 
     try:
         pil_image_rgb = pil_image.convert('RGB')
     except:
-        print('Warning: Failed to convert image %s to RGB' % key)
+        print('Warning: Failed to convert image %s to RGB' % os.path.basename(filename))
         return
 
     try:

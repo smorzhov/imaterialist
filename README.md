@@ -17,7 +17,7 @@ You will need the following things properly installed on your computer.
 Remember that Docker container has the Python version 3.5.2!
 
 1. Download pretrained .
-2. If you are planning to use nvidia-docker, you need to building nvidia-docker image first. Otherwise, you can skip this step
+2. If you are planning to use nvidia-docker, you need to build nvidia-docker image first. Otherwise, you can skip this step
     ```bash
     nvidia-docker build -t sm_keras_tf_py3:gpu .
     ```
@@ -27,9 +27,9 @@ Remember that Docker container has the Python version 3.5.2!
     ```
 3. Download test, train and validation data
     ```
-    nvidia-docker exec imc python3 download.py data/test.json data/raw/test
-    nvidia-docker exec imc python3 download.py data/train.json data/raw/train
-    nvidia-docker exec imc python3 download.py data/validation.json data/raw/validation
+    nvidia-docker exec imc python3 download.py data/test.json data/test
+    nvidia-docker exec imc python3 download.py data/train.json data/train
+    nvidia-docker exec imc python3 download.py data/validation.json data/validation
     ```
 4. Training
     ```bash
