@@ -1,13 +1,5 @@
 #!/usr/bin/python3.5
 # -*- coding:utf-8 -*-
-# Created Time: Fri 02 Mar 2018 03:58:07 PM CST
-# Purpose: download image
-# Mail: tracyliang18@gmail.com
-# Adapted to python 3 by Aloisio Dourado in Sun Mar 11 2018
-
-# Note to Kagglers: This script will not run directly in Kaggle kernels. You
-# need to download it and run it on your local machine.
-
 # Images that already exist will not be downloaded again, so the script can
 # resume a partially completed download. All images will be saved in the JPG
 # format with 90% compression quality.
@@ -21,6 +13,7 @@ from PIL import Image
 from io import BytesIO
 from tqdm import tqdm
 import json
+from utils import try_makedirs
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -40,7 +33,7 @@ def ParseData(data_file):
         url = item['url'][0]
         id_ = item['image_id']
         if id_ in ann:
-            id_ = "{}_{}".format(id_, ann[id_])
+            id_ = (id_, ann[id_])
         key_url_list.append((id_, url))
     return key_url_list
 
@@ -48,11 +41,16 @@ def ParseData(data_file):
 def DownloadImage(key_url):
     out_dir = sys.argv[2]
     (key, url) = key_url
-    filename = os.path.join(out_dir, '%s.jpg' % key)
+    if isinstance(key, tuple):
+        filename = os.path.join(out_dir, str(key[1]), '%s.jpg' % key[0])
+    else:
+        filename = os.path.join(out_dir, '%s.jpg' % key)
 
     if os.path.exists(filename):
         print('Image %s already exists. Skipping download.' % filename)
         return
+    else:
+        try_makedirs(os.path.dirname(filename))
 
     try:
         # print('Trying to get %s.' % url)
