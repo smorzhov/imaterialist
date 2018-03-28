@@ -5,9 +5,8 @@ config = {
             'batch_size': 256
         },
         'fit_generator': {
-            'steps_per_epoch': 10000,
             'epochs': 50,
-            'validation_steps': 3000
+            'validation_steps': 15000
         }
     }
 }
