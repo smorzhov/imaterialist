@@ -97,9 +97,7 @@ def train_and_predict(model_type, gpus):
     model.save(path.join(model_path, 'model.h5'))
     # Building confusion matrices for every class for validation data
     print("Building confusion matrices")
-    val_preds = model.predict_generator(
-        validation_generator,
-        steps=config[model_type]['fit_generator']['validation_steps'])
+    val_preds = model.predict_generator(validation_generator)
     plot_confusion_matrix(
         confusion_matrix(validation_generator.classes, np.argmax(val_preds)),
         map(str, range(1, 128 + 1)),
@@ -107,9 +105,7 @@ def train_and_predict(model_type, gpus):
         normalize=True)
 
     print('Generating predictions')
-    predictions = model.predict_generator(
-        test_generator,
-        steps=config[model_type]['fit_generator']['validation_steps'])
+    predictions = model.predict_generator(test_generator)
     pd.DataFrame({
         'id': test_generator.filenames,
         'predicted': np.argmax(predictions)
