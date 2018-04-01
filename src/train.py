@@ -116,12 +116,19 @@ def train_and_predict(model_type, gpus):
         use_multiprocessing=True,
         workers=cpu_count())
     pred_classes = np.argmax(predictions, axis=1)
+    # Generating predictions.csv for Kaggle 
+    pd.DataFrame({
+        'id': test_generator.filenames,
+        'predicted': pred_classes,
+    }).sort_values(by='id').to_csv(
+        path.join(model_path, 'predictions.csv'), index=False)
+    # Generating predictions.csv with some additional data for post-processing 
     pd.DataFrame({
         'id': test_generator.filenames,
         'predicted': pred_classes,
         'proba': predictions[np.arange(len(predictions)), pred_classes]
     }).sort_values(by='id').to_csv(
-        path.join(model_path, 'predictions.csv'), index=False)
+        path.join(model_path, 'predictions_extd.csv'), index=False)
 
 
 def main():
