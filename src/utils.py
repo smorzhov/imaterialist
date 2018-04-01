@@ -34,6 +34,7 @@ MODELS_PATH = path.join(CWD, 'models')
 Pickled objects must be stored here
 """
 PICKLES_PATH = path.join(CWD, 'pickles')
+CLASSES = list(map(str, range(1, 128 + 1)))
 
 
 def try_makedirs(name):
@@ -73,39 +74,23 @@ def plot_loss_acc(history, model_path):
     plt.gcf().clear()
 
 
-def plot_confusion_matrix(cm,
-                          classes,
-                          model_path,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
+def plot_confusion_matrix(cm, classes, model_path, title='Confusion matrix'):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
     plt.gcf().clear()
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    plt.imshow(cm, interpolation='none')
     plt.title(title)
     plt.colorbar()
     tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-
-    fmt = '.2f' if normalize else 'd'
-    thresh = cm.max() / 2.
-    for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(
-            j,
-            i,
-            format(cm[i, j], fmt),
-            horizontalalignment="center",
-            color="white" if cm[i, j] > thresh else "black")
-
-    plt.tight_layout()
+    plt.xticks(tick_marks, classes, rotation=90, fontsize=2)
+    plt.yticks(tick_marks, classes, fontsize=2)
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.savefig(path.join(model_path, 'confusion_matrix.png'))
+    plt.grid(False)
+    plt.savefig(path.join(model_path, 'confusion_matrix.pdf'), format='pdf')
+
     plt.gcf().clear()

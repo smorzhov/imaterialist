@@ -1,8 +1,11 @@
 import keras.backend.tensorflow_backend as K
 from keras.applications.vgg16 import VGG16
+from keras.models import Model
+from keras.layers import Flatten, Dense, Dropout
+from keras.layers.normalization import BatchNormalization
+from keras.optimizers import RMSprop
 from keras.utils import multi_gpu_model
-
-CLASSES = 128
+from utils import CLASSES
 """
 TODO
 2. VGG19
@@ -37,16 +40,29 @@ def vgg16(gpus):
     """
     Returns compiled keras vgg16 model ready for training
     """
+    base_model = VGG16(
+        weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+    x = Flatten()(base_model.output)
+    x = Dense(4096, activation='relu')(x)
+    x = Dropout(0.5)(x)
+    x = BatchNormalization()(x)
+    output = Dense(len(CLASSES), activation='softmax')(x)
+
     gpus = get_gpus(gpus)
     if len(gpus) == 1:
         with K.tf.device('/gpu:{}'.format(gpus[0])):
-            model = VGG16(weights=None, classes=CLASSES)
+            model = Model(base_model.input, output)
+            for layer in model.layers[:14]:
+                layer.trainable = False
             parallel_model = model
     else:
         with K.tf.device('/cpu:0'):
-            # creates a model that includes
-            model = VGG16(weights=None, classes=CLASSES)
+            model = Model(base_model.input, output)
+            for layer in model.layers[:14]:
+                layer.trainable = False
         parallel_model = multi_gpu_model(model, gpus=gpus)
     parallel_model.compile(
-        loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        loss='categorical_crossentropy',
+        optimizer=RMSprop(lr=0.00001),
+        metrics=['accuracy'])
     return parallel_model, model

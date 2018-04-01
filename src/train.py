@@ -12,7 +12,7 @@ from keras.utils import plot_model
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras.preprocessing.image import ImageDataGenerator
 from utils import (TEST_DATA_PATH, TRAIN_DATA_PATH, VALIDATION_DATA_PATH,
-                   MODELS_PATH, try_makedirs, plot_loss_acc,
+                   MODELS_PATH, CLASSES, try_makedirs, plot_loss_acc,
                    plot_confusion_matrix)
 from sklearn.metrics import confusion_matrix
 from models import get_model
@@ -47,22 +47,23 @@ def train_and_predict(model_type, gpus):
     Trains model and makes predictions file
     """
     # creating data generators
-    train_datagen = ImageDataGenerator(
-        shear_range=0.2, zoom_range=0.2, horizontal_flip=True)
+    train_datagen = ImageDataGenerator(horizontal_flip=True)
     test_datagen = ImageDataGenerator()
     train_generator = train_datagen.flow_from_directory(
         TRAIN_DATA_PATH,
+        classes=CLASSES,
         class_mode='categorical',
         seed=171717,
         **config[model_type]['flow_generator'])
     validation_generator = test_datagen.flow_from_directory(
         VALIDATION_DATA_PATH,
+        classes=CLASSES,
         class_mode='categorical',
         shuffle=False,
         **config[model_type]['flow_generator'])
     test_generator = test_datagen.flow_from_directory(
         TEST_DATA_PATH,
-        class_mode='categorical',
+        class_mode=None,
         shuffle=False,
         **config[model_type]['flow_generator'])
 
@@ -74,10 +75,11 @@ def train_and_predict(model_type, gpus):
         train_generator,
         validation_data=validation_generator,
         callbacks=[
-            EarlyStopping(monitor='val_loss', min_delta=0, patience=7),
+            EarlyStopping(monitor='val_loss', min_delta=0, patience=5),
             ReduceLROnPlateau(
-                monitor='val_loss', factor=0.2, patience=5, min_lr=0.001),
+                monitor='val_loss', factor=0.2, patience=3, min_lr=0.001),
         ],
+        max_queue_size=100,
         use_multiprocessing=True,
         workers=cpu_count(),
         **config[model_type]['fit_generator'])
@@ -97,18 +99,28 @@ def train_and_predict(model_type, gpus):
     model.save(path.join(model_path, 'model.h5'))
     # Building confusion matrices for every class for validation data
     print("Building confusion matrices")
-    val_preds = model.predict_generator(validation_generator)
+    val_preds = model.predict_generator(
+        validation_generator,
+        max_queue_size=100,
+        use_multiprocessing=True,
+        workers=cpu_count())
     plot_confusion_matrix(
-        confusion_matrix(validation_generator.classes, np.argmax(val_preds)),
-        map(str, range(1, 128 + 1)),
-        model_path,
-        normalize=True)
+        confusion_matrix(
+            list(validation_generator.classes), np.argmax(val_preds, axis=1)),
+        CLASSES, model_path)
 
     print('Generating predictions')
-    predictions = model.predict_generator(test_generator)
+    predictions = model.predict_generator(
+        test_generator,
+        max_queue_size=100,
+        use_multiprocessing=True,
+        workers=cpu_count())
+    print('Preds shape ' + str(predictions))
+    pred_classes = np.argmax(predictions, axis=1)
     pd.DataFrame({
         'id': test_generator.filenames,
-        'predicted': np.argmax(predictions)
+        'predicted': pred_classes,
+        'proba': predictions[np.arange(len(predictions)), pred_classes]
     }).sort_values(by='id').to_csv(
         path.join(model_path, 'predictions.csv'), index=False)
 

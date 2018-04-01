@@ -44,7 +44,7 @@ def DownloadImage(key_url):
     if isinstance(key, tuple):
         filename = os.path.join(out_dir, str(key[1]), '%s.jpg' % key[0])
     else:
-        filename = os.path.join(out_dir, '%s.jpg' % key)
+        filename = os.path.join(out_dir, 'test', '%s.jpg' % key)
 
     if os.path.exists(filename):
         print('Image %s already exists. Skipping download.' % filename)
