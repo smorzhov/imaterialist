@@ -9,7 +9,7 @@ from os import path, environ
 import pandas as pd
 import numpy as np
 from keras.utils import plot_model
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau, TerminateOnNaN
 from keras.preprocessing.image import ImageDataGenerator
 from utils import (TEST_DATA_PATH, TRAIN_DATA_PATH, VALIDATION_DATA_PATH,
                    MODELS_PATH, CLASSES, try_makedirs, plot_loss_acc,
@@ -30,7 +30,7 @@ def init_argparse():
         '-m',
         '--model',
         nargs='?',
-        help='model architecture (vgg16, )',
+        help='model architecture (vgg16, vgg19)',
         default='vgg16',
         type=str)
     parser.add_argument(
@@ -78,6 +78,7 @@ def train_and_predict(model_type, gpus):
             EarlyStopping(monitor='val_loss', min_delta=0, patience=5),
             ReduceLROnPlateau(
                 monitor='val_loss', factor=0.2, patience=3, min_lr=0.001),
+            TerminateOnNaN()
         ],
         max_queue_size=100,
         use_multiprocessing=True,
@@ -118,22 +119,18 @@ def train_and_predict(model_type, gpus):
     pred_classes = np.argmax(predictions, axis=1)
     # Dealing with missing data
     ids = list(map(lambda id: id[5:-4], test_generator.filenames))
-    d_ids = set(ids).symmetric_difference(set(range(1, 12801)))
-    for _ in d_ids:
-        pred_classes += [20]
-    ids += d_ids
+    proba = predictions[np.arange(len(predictions)), pred_classes]
     # Generating predictions.csv for Kaggle
-    pd.DataFrame(
-        {
-            'id': ids,
-            'predicted': pred_classes,
-        }, dtype='int32').sort_values(by='id').to_csv(
-            path.join(model_path, 'predictions.csv'), index=False)
+    pd.DataFrame({
+        'id': ids,
+        'predicted': pred_classes,
+    }).sort_values(by='id').to_csv(
+        path.join(model_path, 'predictions.csv'), index=False)
     # Generating predictions.csv with some additional data for post-processing
     pd.DataFrame({
         'id': ids,
         'predicted': pred_classes,
-        'proba': predictions[np.arange(len(predictions)), pred_classes]
+        'proba': proba
     }).sort_values(by='id').to_csv(
         path.join(model_path, 'predictions_extd.csv'), index=False)
 
