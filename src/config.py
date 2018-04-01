@@ -5,7 +5,7 @@ config = {
             'batch_size': 256
         },
         'fit_generator': {
-            'epochs': 1
+            'epochs': 50
         }
     }
 }

@@ -47,8 +47,8 @@ def train_and_predict(model_type, gpus):
     Trains model and makes predictions file
     """
     # creating data generators
-    train_datagen = ImageDataGenerator(horizontal_flip=True)
-    test_datagen = ImageDataGenerator()
+    train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip=True)
+    test_datagen = ImageDataGenerator(rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
         TRAIN_DATA_PATH,
         classes=CLASSES,
@@ -115,7 +115,6 @@ def train_and_predict(model_type, gpus):
         max_queue_size=100,
         use_multiprocessing=True,
         workers=cpu_count())
-    print('Preds shape ' + str(predictions))
     pred_classes = np.argmax(predictions, axis=1)
     pd.DataFrame({
         'id': test_generator.filenames,
