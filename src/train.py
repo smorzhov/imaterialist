@@ -116,15 +116,22 @@ def train_and_predict(model_type, gpus):
         use_multiprocessing=True,
         workers=cpu_count())
     pred_classes = np.argmax(predictions, axis=1)
-    # Generating predictions.csv for Kaggle 
+    # Dealing with missing data
+    ids = list(map(lambda id: id[5:-4], test_generator.filenames))
+    d_ids = set(ids).symmetric_difference(set(range(1, 12801)))
+    for _ in d_ids:
+        pred_classes += [20]
+    ids += d_ids
+    # Generating predictions.csv for Kaggle
+    pd.DataFrame(
+        {
+            'id': ids,
+            'predicted': pred_classes,
+        }, dtype='int32').sort_values(by='id').to_csv(
+            path.join(model_path, 'predictions.csv'), index=False)
+    # Generating predictions.csv with some additional data for post-processing
     pd.DataFrame({
-        'id': test_generator.filenames,
-        'predicted': pred_classes,
-    }).sort_values(by='id').to_csv(
-        path.join(model_path, 'predictions.csv'), index=False)
-    # Generating predictions.csv with some additional data for post-processing 
-    pd.DataFrame({
-        'id': test_generator.filenames,
+        'id': ids,
         'predicted': pred_classes,
         'proba': predictions[np.arange(len(predictions)), pred_classes]
     }).sort_values(by='id').to_csv(
