@@ -75,7 +75,7 @@ def train_and_predict(model_type, gpus):
         train_generator,
         validation_data=validation_generator,
         callbacks=[
-            EarlyStopping(monitor='val_loss', min_delta=0, patience=7),
+            EarlyStopping(monitor='val_loss', min_delta=0, patience=5),
             ReduceLROnPlateau(
                 monitor='val_loss', factor=0.2, patience=3, min_lr=0.000001),
             TerminateOnNaN()
