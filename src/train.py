@@ -30,7 +30,7 @@ def init_argparse():
         '-m',
         '--model',
         nargs='?',
-        help='model architecture (vgg16, vgg19)',
+        help='model architecture (vgg16, vgg19, incresnet, incv3)',
         default='vgg16',
         type=str)
     parser.add_argument(
@@ -75,9 +75,9 @@ def train_and_predict(model_type, gpus):
         train_generator,
         validation_data=validation_generator,
         callbacks=[
-            EarlyStopping(monitor='val_loss', min_delta=0, patience=5),
+            EarlyStopping(monitor='val_loss', min_delta=0, patience=10),
             ReduceLROnPlateau(
-                monitor='val_loss', factor=0.2, patience=3, min_lr=0.001),
+                monitor='val_loss', factor=0.2, patience=3, min_lr=0.000001),
             TerminateOnNaN()
         ],
         max_queue_size=100,

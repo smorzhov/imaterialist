@@ -1,8 +1,10 @@
 import keras.backend.tensorflow_backend as K
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
+from keras.applications.inception_resnet_v2 import InceptionResNetV2
+from keras.applications.inception_v3 import InceptionV3
 from keras.models import Model
-from keras.layers import Flatten, Dense, Dropout
+from keras.layers import Flatten, Dense, Dropout, GlobalAveragePooling2D
 from keras.layers.normalization import BatchNormalization
 from keras.optimizers import RMSprop
 from keras.utils import multi_gpu_model
@@ -10,8 +12,10 @@ from utils import CLASSES
 """
 TODO
 3. ResNet50
-4. Inception V3
 5. Xception
+6. InceptionResNetV2
+7. DenseNet
+8. NASNet
 """
 
 
@@ -33,6 +37,10 @@ def get_model(model, gpus=1, **kwargs):
     """
     if model == 'vgg16' or model == 'vgg19':
         return vgg(gpus, model)
+    if model == 'incresnet':
+        return inception_res_net_v2(gpus)
+    if model == 'incv3':
+        return inception_v3(gpus)
     raise ValueError('Wrong model value!')
 
 
@@ -51,27 +59,59 @@ def vgg(gpus, model):
     else:
         raise ValueError('Wrong VGG model type!')
 
-    x = Flatten()(base_model.output)
-    x = Dense(4096, activation='relu')(x)
-    x = Dropout(0.5)(x)
-    x = BatchNormalization()(x)
+    x = Flatten(name='flatten')(base_model.output)
+    x = Dense(4096, activation='relu', name='fc1')(x)
+    x = Dense(4096, activation='relu', name='fc2')(x)
     output = Dense(len(CLASSES), activation='softmax')(x)
 
+    return _compile(gpus, base_model.input, output, frozen)
+
+
+def inception_v3(gpus):
+    """
+    Returns compiled keras vgg16 model ready for training
+    """
+    frozen = 249
+    base_model = InceptionV3(
+        weights='imagenet', include_top=False, input_shape=(299, 299, 3))
+
+    x = GlobalAveragePooling2D()(base_model.output)
+    x = Dense(1024, activation='relu')(x)
+    output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
+    return _compile(gpus, base_model.input, output, frozen)
+
+
+def inception_res_net_v2(gpus):
+    """
+    Returns compiled keras vgg16 model ready for training
+    """
+    frozen = 0
+    base_model = InceptionResNetV2(
+        weights='imagenet', include_top=False, input_shape=(299, 299, 3))
+
+    x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
+    x = Dense(1024, activation='relu')(x)
+    output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
+
+    return _compile(gpus, base_model.input, output, frozen)
+
+
+def _compile(gpus, input, output, frozen):
     gpus = get_gpus(gpus)
     if len(gpus) == 1:
         with K.tf.device('/gpu:{}'.format(gpus[0])):
-            model = Model(base_model.input, output)
+            model = Model(input, output)
             for layer in model.layers[:frozen]:
                 layer.trainable = False
             parallel_model = model
     else:
         with K.tf.device('/cpu:0'):
-            model = Model(base_model.input, output)
+            model = Model(input, output)
             for layer in model.layers[:frozen]:
                 layer.trainable = False
         parallel_model = multi_gpu_model(model, gpus=gpus)
     parallel_model.compile(
         loss='categorical_crossentropy',
-        optimizer=RMSprop(lr=0.00001),
+        optimizer=RMSprop(lr=0.0001),
         metrics=['accuracy'])
     return parallel_model, model
