@@ -3,20 +3,16 @@ from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
 from keras.applications.inception_resnet_v2 import InceptionResNetV2
 from keras.applications.inception_v3 import InceptionV3
+from keras.applications.xception import Xception
+from keras.applications.resnet50 import ResNet50
+from keras.applications.densenet import DenseNet201
+from keras.applications.nasnet import NASNetLarge
 from keras.models import Model
 from keras.layers import Flatten, Dense, Dropout, GlobalAveragePooling2D
 from keras.layers.normalization import BatchNormalization
 from keras.optimizers import RMSprop
 from keras.utils import multi_gpu_model
 from utils import CLASSES
-"""
-TODO
-3. ResNet50
-5. Xception
-6. InceptionResNetV2
-7. DenseNet
-8. NASNet
-"""
 
 
 def get_gpus(gpus):
@@ -41,6 +37,14 @@ def get_model(model, gpus=1, **kwargs):
         return inception_res_net_v2(gpus)
     if model == 'incv3':
         return inception_v3(gpus)
+    if model == 'xcept':
+        return xception(gpus)
+    if model == 'resnet50':
+        return resnet50(gpus)
+    if model == 'densenet':
+        return dense_net(gpus)
+    if model == 'nasnet':
+        return nasnet(gpus)
     raise ValueError('Wrong model value!')
 
 
@@ -85,12 +89,68 @@ def inception_res_net_v2(gpus):
     """
     Returns compiled keras vgg16 model ready for training
     """
-    frozen = 0
+    frozen = 0  # TODO
     base_model = InceptionResNetV2(
         weights='imagenet', include_top=False, input_shape=(299, 299, 3))
 
     x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
+    output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
+
+    return _compile(gpus, base_model.input, output, frozen)
+
+
+def xception(gpus):
+    """
+    Returns compiled keras vgg16 model ready for training
+    """
+    frozen = 125
+    base_model = Xception(
+        weights='imagenet', include_top=False, input_shape=(299, 299, 3))
+
+    x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
     x = Dense(1024, activation='relu')(x)
+    output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
+
+    return _compile(gpus, base_model.input, output, frozen)
+
+
+def resnet50(gpus):
+    """
+    Returns compiled keras vgg16 model ready for training
+    """
+    frozen = 0
+    base_model = ResNet50(
+        weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+
+    x = Flatten()(base_model.output)
+    output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
+
+    return _compile(gpus, base_model.input, output, frozen)
+
+
+def dense_net(gpus):
+    """
+    Returns compiled keras vgg16 model ready for training
+    """
+    frozen = 0
+    base_model = DenseNet201(
+        weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+
+    x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
+    output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
+
+    return _compile(gpus, base_model.input, output, frozen)
+
+
+def nasnet(gpus):
+    """
+    Returns compiled keras vgg16 model ready for training
+    """
+    frozen = 0
+    base_model = NASNetLarge(
+        weights='imagenet', include_top=False, input_shape=(331, 331, 3))
+
+    x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
     output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
 
     return _compile(gpus, base_model.input, output, frozen)
@@ -113,5 +173,5 @@ def _compile(gpus, input, output, frozen):
     parallel_model.compile(
         loss='categorical_crossentropy',
         optimizer=RMSprop(lr=0.0001),
-        metrics=['accuracy'])
+        metrics=['accuracy', 'top_k_categorical_accuracy'])
     return parallel_model, model
