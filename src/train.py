@@ -9,7 +9,8 @@ from os import path, environ
 import pandas as pd
 import numpy as np
 from keras.utils import plot_model
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau, TerminateOnNaN
+from keras.callbacks import (EarlyStopping, ReduceLROnPlateau, TerminateOnNaN,
+                             ModelCheckpoint)
 from keras.preprocessing.image import ImageDataGenerator
 from utils import (TEST_DATA_PATH, TRAIN_DATA_PATH, VALIDATION_DATA_PATH,
                    MODELS_PATH, CLASSES, try_makedirs, plot_loss_acc,
@@ -30,7 +31,8 @@ def init_argparse():
         '-m',
         '--model',
         nargs='?',
-        help='model architecture (vgg16, vgg19, incresnet, incv3, xcept, resnet50, densnet, nasnet)',
+        help=
+        'model architecture (vgg16, vgg19, incresnet, incv3, xcept, resnet50, densnet, nasnet)',
         default='vgg16',
         type=str)
     parser.add_argument(
@@ -47,13 +49,21 @@ def train_and_predict(model_type, gpus):
     Trains model and makes predictions file
     """
     # creating data generators
-    train_datagen = ImageDataGenerator(rescale=1. / 255, horizontal_flip=True)
+    train_datagen = ImageDataGenerator(
+        rotation_range=40,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        rescale=1. / 255,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        fill_mode='nearest')
     test_datagen = ImageDataGenerator(rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
         TRAIN_DATA_PATH,
         classes=CLASSES,
         class_mode='categorical',
-        seed=171717,
+        seed=42,
         **config[model_type]['flow_generator'])
     validation_generator = test_datagen.flow_from_directory(
         VALIDATION_DATA_PATH,
@@ -75,7 +85,14 @@ def train_and_predict(model_type, gpus):
         train_generator,
         validation_data=validation_generator,
         callbacks=[
-            EarlyStopping(monitor='val_loss', min_delta=0, patience=5),
+            # EarlyStopping(monitor='val_loss', min_delta=0, patience=5),
+            ModelCheckpoint(
+                path.join(
+                    MODELS_PATH,
+                    '{}.{epoch:02d}-{val_loss:.2f}-{val_acc:.2f}.hdf5'.format(
+                        model_type)),
+                save_weights_only=True,
+                save_best_only=True),
             ReduceLROnPlateau(
                 monitor='val_loss', factor=0.2, patience=3, min_lr=0.000001),
             TerminateOnNaN()
@@ -100,7 +117,7 @@ def train_and_predict(model_type, gpus):
     model.save(path.join(model_path, 'model.h5'))
     # Building confusion matrices for every class for validation data
     print("Building confusion matrices")
-    val_preds = model.predict_generator(
+    val_preds = parallel_model.predict_generator(
         validation_generator,
         max_queue_size=100,
         use_multiprocessing=True,
@@ -111,7 +128,7 @@ def train_and_predict(model_type, gpus):
         CLASSES, model_path)
 
     print('Generating predictions')
-    predictions = model.predict_generator(
+    predictions = parallel_model.predict_generator(
         test_generator,
         max_queue_size=100,
         use_multiprocessing=True,
