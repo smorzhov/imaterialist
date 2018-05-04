@@ -9,9 +9,9 @@ from keras.applications.resnet50 import ResNet50
 from keras.applications.densenet import DenseNet201
 from keras.applications.nasnet import NASNetLarge
 from keras.models import Model
-from keras.layers import Flatten, Dense, Dropout, GlobalAveragePooling2D
+from keras.layers import Dense, Dropout
 from keras.layers.normalization import BatchNormalization
-from keras.optimizers import Adam
+from keras.optimizers import RMSprop
 from keras.utils import multi_gpu_model
 from utils import CLASSES
 
@@ -54,17 +54,22 @@ def vgg(model):
     """
     if model == 'vgg16':
         base_model = VGG16(
-            weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+            weights='imagenet',
+            include_top=False,
+            input_shape=(224, 224, 3),
+            pooling='avg')
         frozen = 14
     elif model == 'vgg19':
         base_model = VGG19(
-            weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+            weights='imagenet',
+            include_top=False,
+            input_shape=(224, 224, 3),
+            pooling='avg')
         frozen = 16
     else:
         raise ValueError('Wrong VGG model type!')
 
-    x = Flatten(name='flatten')(base_model.output)
-    x = Dense(4096, activation='relu', name='fc1')(x)
+    x = Dense(4096, activation='relu', name='fc1')(base_model.output)
     x = Dense(4096, activation='relu', name='fc2')(x)
     output = Dense(len(CLASSES), activation='softmax')(x)
 
@@ -77,10 +82,13 @@ def inception_v3():
     """
     frozen = 249
     base_model = InceptionV3(
-        weights='imagenet', include_top=False, input_shape=(299, 299, 3))
+        weights='imagenet',
+        include_top=False,
+        input_shape=(299, 299, 3),
+        pooling='avg')
 
-    x = GlobalAveragePooling2D()(base_model.output)
-    x = Dense(1024, activation='relu')(x)
+    x = Dense(1024, activation='relu')(base_model.output)
+    x = Dropout(0.5)(x)
     output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
     return _compile(base_model.input, output, frozen)
 
@@ -91,10 +99,14 @@ def inception_res_net_v2():
     """
     frozen = 0  # TODO
     base_model = InceptionResNetV2(
-        weights='imagenet', include_top=False, input_shape=(299, 299, 3))
+        weights='imagenet',
+        include_top=False,
+        input_shape=(299, 299, 3),
+        pooling='avg')
 
-    x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
-    output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
+    output = Dense(
+        len(CLASSES), activation='softmax',
+        name='predictions')(base_model.output)
 
     return _compile(base_model.input, output, frozen)
 
@@ -105,10 +117,13 @@ def xception():
     """
     frozen = 125
     base_model = Xception(
-        weights='imagenet', include_top=False, input_shape=(299, 299, 3))
+        weights='imagenet',
+        include_top=False,
+        input_shape=(299, 299, 3),
+        pooling='avg')
 
-    x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
-    x = Dense(1024, activation='relu')(x)
+    x = Dense(1024, activation='relu')(base_model.output)
+    x = Dropout(0.5)(x)
     output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
 
     return _compile(base_model.input, output, frozen)
@@ -120,10 +135,14 @@ def resnet50():
     """
     frozen = 0
     base_model = ResNet50(
-        weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+        weights='imagenet',
+        include_top=False,
+        input_shape=(224, 224, 3),
+        pooling='avg')
 
-    x = Flatten()(base_model.output)
-    output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
+    output = Dense(
+        len(CLASSES), activation='softmax',
+        name='predictions')(base_model.output)
 
     return _compile(base_model.input, output, frozen)
 
@@ -134,10 +153,14 @@ def dense_net():
     """
     frozen = 0
     base_model = DenseNet201(
-        weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+        weights='imagenet',
+        include_top=False,
+        input_shape=(224, 224, 3),
+        pooling='avg')
 
-    x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
-    output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
+    output = Dense(
+        len(CLASSES), activation='softmax',
+        name='predictions')(base_model.output)
 
     return _compile(base_model.input, output, frozen)
 
@@ -148,10 +171,14 @@ def nasnet():
     """
     frozen = 0
     base_model = NASNetLarge(
-        weights='imagenet', include_top=False, input_shape=(331, 331, 3))
+        weights='imagenet',
+        include_top=False,
+        input_shape=(331, 331, 3),
+        pooling='avg')
 
-    x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
-    output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
+    output = Dense(
+        len(CLASSES), activation='softmax',
+        name='predictions')(base_model.output)
 
     return _compile(base_model.input, output, frozen)
 
@@ -175,6 +202,7 @@ def _compile(input, output, frozen):
         parallel_model = multi_gpu_model(model, gpus=len(gpus))
     parallel_model.compile(
         loss='categorical_crossentropy',
-        optimizer=Adam(lr=0.001, decay=0.0001),
+        optimizer=RMSprop(lr=0.001),
+        # optimizer=Adam(lr=0.001, decay=0.0001),
         metrics=['accuracy', 'top_k_categorical_accuracy'])
     return parallel_model, model
