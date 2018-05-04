@@ -83,7 +83,7 @@ def train_and_predict(model_type):
             ModelCheckpoint(
                 path.join(
                     MODELS_PATH,
-                    '{model_type}.{epoch:02d}-{val_loss:.4f}-{val_acc:.4f}.hdf5'
+                    model_type + '.{epoch:02d}-{val_loss:.4f}-{val_acc:.4f}.hdf5'
                 ),
                 save_weights_only=True,
                 save_best_only=True),
