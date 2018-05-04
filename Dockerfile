@@ -39,3 +39,4 @@ RUN apt update -qq && \
     tqdm
 
 WORKDIR /imaterialist
+ENV CUDA_VISIBLE_DEVICES 0

@@ -1,3 +1,4 @@
+from os import environ
 import keras.backend.tensorflow_backend as K
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
@@ -10,7 +11,7 @@ from keras.applications.nasnet import NASNetLarge
 from keras.models import Model
 from keras.layers import Flatten, Dense, Dropout, GlobalAveragePooling2D
 from keras.layers.normalization import BatchNormalization
-from keras.optimizers import RMSprop
+from keras.optimizers import Adam
 from keras.utils import multi_gpu_model
 from utils import CLASSES
 
@@ -22,33 +23,32 @@ def get_gpus(gpus):
     return list(map(int, gpus.split(',')))
 
 
-def get_model(model, gpus=1, **kwargs):
+def get_model(model, **kwargs):
     """
     Returns compiled keras parallel model ready for training
     and base model that must be used for saving weights
 
     Params:
     - model - model type
-    - gpus - a list with numbers of GPUs
     """
     if model == 'vgg16' or model == 'vgg19':
-        return vgg(gpus, model)
+        return vgg(model)
     if model == 'incresnet':
-        return inception_res_net_v2(gpus)
+        return inception_res_net_v2()
     if model == 'incv3':
-        return inception_v3(gpus)
+        return inception_v3()
     if model == 'xcept':
-        return xception(gpus)
+        return xception()
     if model == 'resnet50':
-        return resnet50(gpus)
+        return resnet50()
     if model == 'densenet':
-        return dense_net(gpus)
+        return dense_net()
     if model == 'nasnet':
-        return nasnet(gpus)
+        return nasnet()
     raise ValueError('Wrong model value!')
 
 
-def vgg(gpus, model):
+def vgg(model):
     """
     Returns compiled keras vgg16 model ready for training
     """
@@ -68,10 +68,10 @@ def vgg(gpus, model):
     x = Dense(4096, activation='relu', name='fc2')(x)
     output = Dense(len(CLASSES), activation='softmax')(x)
 
-    return _compile(gpus, base_model.input, output, frozen)
+    return _compile(base_model.input, output, frozen)
 
 
-def inception_v3(gpus):
+def inception_v3():
     """
     Returns compiled keras vgg16 model ready for training
     """
@@ -82,10 +82,10 @@ def inception_v3(gpus):
     x = GlobalAveragePooling2D()(base_model.output)
     x = Dense(1024, activation='relu')(x)
     output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
-    return _compile(gpus, base_model.input, output, frozen)
+    return _compile(base_model.input, output, frozen)
 
 
-def inception_res_net_v2(gpus):
+def inception_res_net_v2():
     """
     Returns compiled keras vgg16 model ready for training
     """
@@ -96,10 +96,10 @@ def inception_res_net_v2(gpus):
     x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
     output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
 
-    return _compile(gpus, base_model.input, output, frozen)
+    return _compile(base_model.input, output, frozen)
 
 
-def xception(gpus):
+def xception():
     """
     Returns compiled keras vgg16 model ready for training
     """
@@ -111,10 +111,10 @@ def xception(gpus):
     x = Dense(1024, activation='relu')(x)
     output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
 
-    return _compile(gpus, base_model.input, output, frozen)
+    return _compile(base_model.input, output, frozen)
 
 
-def resnet50(gpus):
+def resnet50():
     """
     Returns compiled keras vgg16 model ready for training
     """
@@ -125,10 +125,10 @@ def resnet50(gpus):
     x = Flatten()(base_model.output)
     output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
 
-    return _compile(gpus, base_model.input, output, frozen)
+    return _compile(base_model.input, output, frozen)
 
 
-def dense_net(gpus):
+def dense_net():
     """
     Returns compiled keras vgg16 model ready for training
     """
@@ -139,10 +139,10 @@ def dense_net(gpus):
     x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
     output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
 
-    return _compile(gpus, base_model.input, output, frozen)
+    return _compile(base_model.input, output, frozen)
 
 
-def nasnet(gpus):
+def nasnet():
     """
     Returns compiled keras vgg16 model ready for training
     """
@@ -153,11 +153,11 @@ def nasnet(gpus):
     x = GlobalAveragePooling2D(name='avg_pool')(base_model.output)
     output = Dense(len(CLASSES), activation='softmax', name='predictions')(x)
 
-    return _compile(gpus, base_model.input, output, frozen)
+    return _compile(base_model.input, output, frozen)
 
 
-def _compile(gpus, input, output, frozen):
-    gpus = get_gpus(gpus)
+def _compile(input, output, frozen):
+    gpus = get_gpus(environ['CUDA_VISIBLE_DEVICES'])
     if len(gpus) == 1:
         with K.tf.device('/gpu:{}'.format(gpus[0])):
             model = Model(input, output)
@@ -169,9 +169,12 @@ def _compile(gpus, input, output, frozen):
             model = Model(input, output)
             for layer in model.layers[:frozen]:
                 layer.trainable = False
-        parallel_model = multi_gpu_model(model, gpus=gpus)
+        # gpus=len(gpus) - simple workaround for reassigned GPUs ids.
+        # While passing CUDA_VISIBLE_DEVICES as environment variable
+        # it is assumed that all specified GPUs will be used during training
+        parallel_model = multi_gpu_model(model, gpus=len(gpus))
     parallel_model.compile(
         loss='categorical_crossentropy',
-        optimizer=RMSprop(lr=0.0001),
+        optimizer=Adam(lr=0.001, decay=0.0001),
         metrics=['accuracy', 'top_k_categorical_accuracy'])
     return parallel_model, model

@@ -31,6 +31,9 @@ Remember that Docker container has the Python version 3.5.2!
     nvidia-docker exec imc python3 download.py data/validation.json data/validation
     ```
 3. Training
+
+    By default, only the 0th GPU is visible for the docker container. You can change this by passing `--env` option to `exec`. For example:
     ```bash
-    nvidia-docker exec imc python3 train.py [-h]
+    nvidia-docker exec --env CUDA_VISIBLE_DEVICES='0,1,2' imc python3 train.py
     ```
+    This will start training on 0th, 1st and 2nd GPUs.

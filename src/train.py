@@ -5,7 +5,7 @@ Usage: python train.py [-h]
 """
 from argparse import ArgumentParser
 from multiprocessing import cpu_count
-from os import path, environ
+from os import path
 import pandas as pd
 import numpy as np
 from keras.utils import plot_model
@@ -35,16 +35,10 @@ def init_argparse():
         'model architecture (vgg16, vgg19, incresnet, incv3, xcept, resnet50, densnet, nasnet)',
         default='vgg16',
         type=str)
-    parser.add_argument(
-        '--gpus',
-        nargs='?',
-        help="A list of GPU device numbers ('1', '1,2,5')",
-        default=0,
-        type=str)
     return parser
 
 
-def train_and_predict(model_type, gpus):
+def train_and_predict(model_type):
     """
     Trains model and makes predictions file
     """
@@ -78,7 +72,7 @@ def train_and_predict(model_type, gpus):
         **config[model_type]['flow_generator'])
 
     # loading the model
-    parallel_model, model = get_model(model=model_type, gpus=gpus)
+    parallel_model, model = get_model(model=model_type)
     print('Training model')
     print(model.summary())
     history = parallel_model.fit_generator(
@@ -89,12 +83,12 @@ def train_and_predict(model_type, gpus):
             ModelCheckpoint(
                 path.join(
                     MODELS_PATH,
-                    '{}.{epoch:02d}-{val_loss:.2f}-{val_acc:.2f}.hdf5'.format(
-                        model_type)),
+                    '{model_type}.{epoch:02d}-{val_loss:.4f}-{val_acc:.4f}.hdf5'
+                ),
                 save_weights_only=True,
                 save_best_only=True),
             ReduceLROnPlateau(
-                monitor='val_loss', factor=0.2, patience=3, min_lr=0.000001),
+                monitor='val_loss', factor=0.2, patience=3, min_lr=0.0000001),
             TerminateOnNaN()
         ],
         max_queue_size=100,
@@ -157,10 +151,7 @@ def main():
     Main function
     """
     args = init_argparse().parse_args()
-
-    environ['CUDA_VISIBLE_DEVICES'] = args.gpus
-
-    train_and_predict(args.model, args.gpus)
+    train_and_predict(args.model)
 
 
 if __name__ == '__main__':
