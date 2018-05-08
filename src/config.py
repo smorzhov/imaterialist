@@ -65,7 +65,7 @@ config = {
     'nasnet': {
         'flow_generator': {
             'target_size': (331, 331),
-            'batch_size': 64
+            'batch_size': 100
         },
         'fit_generator': {
             'epochs': 15

@@ -9,6 +9,7 @@ from itertools import product
 from os import path, makedirs
 import numpy as np
 from sklearn.metrics import confusion_matrix
+from skimage import exposure
 import matplotlib
 # generates images without having a window appear
 matplotlib.use('Agg')
@@ -35,6 +36,16 @@ Pickled objects must be stored here
 """
 PICKLES_PATH = path.join(CWD, 'pickles')
 CLASSES = list(map(str, range(1, 128 + 1)))
+
+
+def def ahe(img):
+    """
+    Performs adaptive histogram equalization
+
+    Returns processed image
+    """
+    img_adapteq = exposure.equalize_adapthist(img, clip_limit=0.03)
+    return img_adapteq
 
 
 def try_makedirs(name):

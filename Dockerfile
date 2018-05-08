@@ -35,6 +35,7 @@ RUN apt update -qq && \
     pandas \
     Pillow \
     scikit-learn \
+    scikit-image \
     urllib3 \
     tqdm
 

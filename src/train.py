@@ -13,7 +13,7 @@ from keras.callbacks import (EarlyStopping, ReduceLROnPlateau, TerminateOnNaN,
                              ModelCheckpoint)
 from keras.preprocessing.image import ImageDataGenerator
 from utils import (TEST_DATA_PATH, TRAIN_DATA_PATH, VALIDATION_DATA_PATH,
-                   MODELS_PATH, CLASSES, try_makedirs, plot_loss_acc,
+                   MODELS_PATH, CLASSES, try_makedirs, plot_loss_acc, ahe,
                    plot_confusion_matrix)
 from sklearn.metrics import confusion_matrix
 from models import get_model
@@ -51,8 +51,10 @@ def train_and_predict(model_type):
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
-        fill_mode='nearest')
-    test_datagen = ImageDataGenerator(rescale=1. / 255)
+        fill_mode='nearest',
+        preprocessing_function=ahe)
+    test_datagen = ImageDataGenerator(
+        rescale=1. / 255, preprocessing_function=ahe)
     train_generator = train_datagen.flow_from_directory(
         TRAIN_DATA_PATH,
         classes=CLASSES,
@@ -81,10 +83,8 @@ def train_and_predict(model_type):
         callbacks=[
             # EarlyStopping(monitor='val_loss', min_delta=0, patience=5),
             ModelCheckpoint(
-                path.join(
-                    MODELS_PATH,
-                    model_type + '.{epoch:02d}-{val_loss:.4f}-{val_acc:.4f}.hdf5'
-                ),
+                path.join(MODELS_PATH, model_type +
+                          '.{epoch:02d}-{val_loss:.4f}-{val_acc:.4f}.hdf5'),
                 save_weights_only=True,
                 save_best_only=True),
             ReduceLROnPlateau(
