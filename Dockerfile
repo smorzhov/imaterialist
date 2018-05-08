@@ -18,6 +18,7 @@ RUN apt update -qq && \
     libopenblas-base \
     python3-numpy \
     python3-scipy \
+    python3-skimage \
     # requirements for keras
     python3-h5py \
     python3-yaml \
@@ -35,7 +36,6 @@ RUN apt update -qq && \
     pandas \
     Pillow \
     scikit-learn \
-    scikit-image \
     urllib3 \
     tqdm
 
