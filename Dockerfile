@@ -37,10 +37,9 @@ RUN apt update -qq && \
     pandas \
     Pillow \
     scikit-learn \
+    scikit-image \
     urllib3 \
-    tqdm && \
-    git clone https://github.com/scikit-image/scikit-image.git; cd scikit-image && \
-    python3 -m pip --no-cache-dir install -e .
+    tqdm
 
 WORKDIR /imaterialist
 ENV CUDA_VISIBLE_DEVICES 0

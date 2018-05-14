@@ -9,7 +9,6 @@ from itertools import product
 from os import path, makedirs
 import numpy as np
 from sklearn.metrics import confusion_matrix
-from skimage.exposure import equalize_adapthist
 """
 Absolute utils.py file path. It is considered as the project root path.
 """
@@ -32,15 +31,6 @@ Pickled objects must be stored here
 """
 PICKLES_PATH = path.join(CWD, 'pickles')
 CLASSES = list(map(str, range(1, 128 + 1)))
-
-
-def ahe(img):
-    """
-    Performs adaptive histogram equalization
-
-    Returns processed image
-    """
-    return equalize_adapthist(img, clip_limit=0.03)
 
 
 def try_makedirs(name):

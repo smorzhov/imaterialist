@@ -13,7 +13,7 @@ from keras.callbacks import (EarlyStopping, ReduceLROnPlateau, TerminateOnNaN,
                              ModelCheckpoint)
 from keras.preprocessing.image import ImageDataGenerator
 from utils import (TEST_DATA_PATH, TRAIN_DATA_PATH, VALIDATION_DATA_PATH,
-                   MODELS_PATH, CLASSES, try_makedirs, plot_loss_acc, ahe,
+                   MODELS_PATH, CLASSES, try_makedirs, plot_loss_acc,
                    plot_confusion_matrix)
 from sklearn.metrics import confusion_matrix
 from models import get_model
@@ -71,10 +71,8 @@ def train_and_predict(model_type,
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
-        fill_mode='nearest',
-        preprocessing_function=ahe)
-    test_datagen = ImageDataGenerator(
-        rescale=1. / 255, preprocessing_function=ahe)
+        fill_mode='nearest')
+    test_datagen = ImageDataGenerator(rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
         train_path,
         classes=CLASSES,
