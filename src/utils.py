@@ -10,10 +10,6 @@ from os import path, makedirs
 import numpy as np
 from sklearn.metrics import confusion_matrix
 from skimage.exposure import equalize_adapthist
-import matplotlib
-# generates images without having a window appear
-matplotlib.use('Agg')
-import matplotlib.pylab as plt
 """
 Absolute utils.py file path. It is considered as the project root path.
 """
@@ -63,6 +59,11 @@ def plot_loss_acc(history, model_path):
     """
     Saves into files accuracy and loss plots
     """
+    import matplotlib
+    # generates images without having a window appear
+    matplotlib.use('Agg')
+    import matplotlib.pylab as plt
+
     plt.gcf().clear()
     # summarize history for accuracy
     plt.plot(history.history['acc'])
@@ -89,6 +90,11 @@ def plot_confusion_matrix(cm, classes, model_path, title='Confusion matrix'):
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
+    import matplotlib
+    # generates images without having a window appear
+    matplotlib.use('Agg')
+    import matplotlib.pylab as plt
+
     plt.gcf().clear()
 
     cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]

@@ -10,17 +10,14 @@ RUN apt update -qq && \
     g++ \
     git \
     graphviz \
+    cython \
     openssh-client \
     python3-pip \
     python3-dev \
     python3-setuptools \
     # requirements for numpy
     libopenblas-base \
-    python3-numpy \
-    python3-scipy \
-    python3-skimage \
     # requirements for keras
-    python3-h5py \
     python3-yaml \
     # requirements for pydot
     python3-pydot && \
@@ -30,14 +27,20 @@ RUN apt update -qq && \
     pip --no-cache-dir uninstall -y tensorflow && \
     python3 -m pip --no-cache-dir install --upgrade pip && \
     python3 -m pip --no-cache-dir install --upgrade \
+    cython \
+    h5py \
+    scipy \
     tensorflow-gpu \
     keras \
     matplotlib \
+    numpy \
     pandas \
     Pillow \
     scikit-learn \
     urllib3 \
-    tqdm
+    tqdm && \
+    git clone https://github.com/scikit-image/scikit-image.git; cd scikit-image && \
+    python3 -m pip --no-cache-dir install -e .
 
 WORKDIR /imaterialist
 ENV CUDA_VISIBLE_DEVICES 0
