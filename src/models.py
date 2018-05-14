@@ -50,7 +50,7 @@ def get_model(model, **kwargs):
 
 def vgg(model):
     """
-    Returns compiled keras vgg16 model ready for training
+    Returns compiled keras model ready for training
     """
     if model == 'vgg16':
         base_model = VGG16(
@@ -78,7 +78,7 @@ def vgg(model):
 
 def inception_v3():
     """
-    Returns compiled keras vgg16 model ready for training
+    Returns compiled keras model ready for training
     """
     frozen = 249
     base_model = InceptionV3(
@@ -95,7 +95,7 @@ def inception_v3():
 
 def inception_res_net_v2():
     """
-    Returns compiled keras vgg16 model ready for training
+    Returns compiled keras model ready for training
     """
     frozen = 0  # TODO
     base_model = InceptionResNetV2(
@@ -113,7 +113,7 @@ def inception_res_net_v2():
 
 def xception():
     """
-    Returns compiled keras vgg16 model ready for training
+    Returns compiled keras model ready for training
     """
     frozen = 125
     base_model = Xception(
@@ -131,7 +131,7 @@ def xception():
 
 def resnet50():
     """
-    Returns compiled keras vgg16 model ready for training
+    Returns compiled keras model ready for training
     """
     frozen = 0
     base_model = ResNet50(
@@ -149,7 +149,7 @@ def resnet50():
 
 def dense_net():
     """
-    Returns compiled keras vgg16 model ready for training
+    Returns compiled keras model ready for training
     """
     frozen = 0
     base_model = DenseNet201(
@@ -167,9 +167,9 @@ def dense_net():
 
 def nasnet():
     """
-    Returns compiled keras vgg16 model ready for training
+    Returns compiled keras model ready for training
     """
-    frozen = 0
+    frozen = -44
     base_model = NASNetLarge(
         weights='imagenet',
         include_top=False,

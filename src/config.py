@@ -32,7 +32,7 @@ config = {
             'batch_size': 300
         },
         'fit_generator': {
-            'epochs': 15
+            'epochs': 20
         }
     },
     'incresnet': {
