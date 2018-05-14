@@ -18,9 +18,9 @@ CWD = path.dirname(path.realpath(__file__))
 It must contain files with raw data
 """
 DATA_PATH = path.join(CWD, 'data')
-TEST_DATA_PATH = path.join(DATA_PATH, 'test')
-TRAIN_DATA_PATH = path.join(DATA_PATH, 'train')
-VALIDATION_DATA_PATH = path.join(DATA_PATH, 'validation')
+TEST_DATA_PATH = path.join(DATA_PATH, 'test_p')
+TRAIN_DATA_PATH = path.join(DATA_PATH, 'train_p')
+VALIDATION_DATA_PATH = path.join(DATA_PATH, 'validation_p')
 
 LOG_PATH = path.join(CWD, 'log')
 """
