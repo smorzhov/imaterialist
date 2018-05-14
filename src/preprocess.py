@@ -22,7 +22,7 @@ def apply_transformation(files):
         dst_dir = path.join(head + '_p', tail)
         if not path.exists(dst_dir):
             try_makedirs(dst_dir)
-        img = resize(img, (256, 256, 3))
+        img = resize(img, (299, 299, 3))
         img = equalize_adapthist(img, clip_limit=0.03)
         imsave(path.join(dst_dir, f_name), img)
 

@@ -31,14 +31,34 @@ def init_argparse():
         '-m',
         '--model',
         nargs='?',
-        help=
-        'model architecture (vgg16, vgg19, incresnet, incv3, xcept, resnet50, densnet, nasnet)',
-        default='vgg16',
+        help='model architecture (vgg16, vgg19, incresnet, incv3, xcept, resnet50, densnet, nasnet)',
+        default='incresnet',
+        type=str)
+    parser.add_argument(
+        '--test',
+        nargs='?',
+        help='test data path',
+        default=TEST_DATA_PATH,
+        type=str)
+    parser.add_argument(
+        '--train',
+        nargs='?',
+        help='train data path',
+        default=TRAIN_DATA_PATH,
+        type=str)
+    parser.add_argument(
+        '--validation',
+        nargs='?',
+        help='test data path',
+        default=VALIDATION_DATA_PATH,
         type=str)
     return parser
 
 
-def train_and_predict(model_type):
+def train_and_predict(model_type,
+                      train_path=TRAIN_DATA_PATH,
+                      test_path=TEST_DATA_PATH,
+                      validation_path=VALIDATION_DATA_PATH):
     """
     Trains model and makes predictions file
     """
@@ -56,19 +76,19 @@ def train_and_predict(model_type):
     test_datagen = ImageDataGenerator(
         rescale=1. / 255, preprocessing_function=ahe)
     train_generator = train_datagen.flow_from_directory(
-        TRAIN_DATA_PATH,
+        train_path,
         classes=CLASSES,
         class_mode='categorical',
         seed=42,
         **config[model_type]['flow_generator'])
     validation_generator = test_datagen.flow_from_directory(
-        VALIDATION_DATA_PATH,
+        validation_path,
         classes=CLASSES,
         class_mode='categorical',
         shuffle=False,
         **config[model_type]['flow_generator'])
     test_generator = test_datagen.flow_from_directory(
-        TEST_DATA_PATH,
+        test_path,
         class_mode=None,
         shuffle=False,
         **config[model_type]['flow_generator'])
@@ -151,7 +171,7 @@ def main():
     Main function
     """
     args = init_argparse().parse_args()
-    train_and_predict(args.model)
+    train_and_predict(args.model, args.train, args.test, args.validation)
 
 
 if __name__ == '__main__':
