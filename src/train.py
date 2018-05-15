@@ -64,13 +64,15 @@ def train_and_predict(model_type,
     """
     # creating data generators
     train_datagen = ImageDataGenerator(
-        rotation_range=40,
-        width_shift_range=0.2,
-        height_shift_range=0.2,
+        rotation_range=20,
+        width_shift_range=0.15,
+        height_shift_range=0.15,
         rescale=1. / 255,
-        shear_range=0.2,
-        zoom_range=0.2,
+        shear_range=0.4,
+        zoom_range=0.3,
+        channel_shift_range=0.1,
         horizontal_flip=True,
+        vertical_flip=True,
         fill_mode='nearest')
     test_datagen = ImageDataGenerator(rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
