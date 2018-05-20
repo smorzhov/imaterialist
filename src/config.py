@@ -38,10 +38,10 @@ config = {
     'incresnet': {
         'flow_generator': {
             'target_size': (299, 299),
-            'batch_size': 400
+            'batch_size': 350
         },
         'fit_generator': {
-            'epochs': 20
+            'epochs': 15
         }
     },
     'incv3': {

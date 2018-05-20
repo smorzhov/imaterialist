@@ -31,7 +31,8 @@ def init_argparse():
         '-m',
         '--model',
         nargs='?',
-        help='model architecture (vgg16, vgg19, incresnet, incv3, xcept, resnet50, densnet, nasnet)',
+        help=
+        'model architecture (vgg16, vgg19, incresnet, incv3, xcept, resnet50, densnet, nasnet)',
         default='incresnet',
         type=str)
     parser.add_argument(
@@ -52,13 +53,20 @@ def init_argparse():
         help='test data path',
         default=VALIDATION_DATA_PATH,
         type=str)
+    parser.add_argument(
+        '--weights',
+        nargs='?',
+        help='path to weights hd5 file',
+        default=None,
+        type=str)
     return parser
 
 
 def train_and_predict(model_type,
                       train_path=TRAIN_DATA_PATH,
                       test_path=TEST_DATA_PATH,
-                      validation_path=VALIDATION_DATA_PATH):
+                      validation_path=VALIDATION_DATA_PATH,
+                      weights_path=None):
     """
     Trains model and makes predictions file
     """
@@ -73,19 +81,23 @@ def train_and_predict(model_type,
         channel_shift_range=0.1,
         horizontal_flip=True,
         vertical_flip=True,
-        fill_mode='nearest')
+        fill_mode='nearest',
+        validation_split=0.1)
     test_datagen = ImageDataGenerator(rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
         train_path,
         classes=CLASSES,
         class_mode='categorical',
         seed=42,
+        subset='training',
         **config[model_type]['flow_generator'])
     validation_generator = test_datagen.flow_from_directory(
-        validation_path,
+        train_path,
+        # validation_path,
         classes=CLASSES,
         class_mode='categorical',
         shuffle=False,
+        subset='validation',
         **config[model_type]['flow_generator'])
     test_generator = test_datagen.flow_from_directory(
         test_path,
@@ -94,7 +106,8 @@ def train_and_predict(model_type,
         **config[model_type]['flow_generator'])
 
     # loading the model
-    parallel_model, model = get_model(model=model_type)
+    parallel_model, model = get_model(
+        model=model_type, weights_path=weights_path)
     print('Training model')
     print(model.summary())
     history = parallel_model.fit_generator(
@@ -108,7 +121,7 @@ def train_and_predict(model_type,
                 save_weights_only=True,
                 save_best_only=True),
             ReduceLROnPlateau(
-                monitor='val_loss', factor=0.2, patience=3, min_lr=0.0000001),
+                monitor='val_acc', factor=0.2, patience=3, min_lr=0.0000001),
             TerminateOnNaN()
         ],
         max_queue_size=100,
@@ -171,7 +184,8 @@ def main():
     Main function
     """
     args = init_argparse().parse_args()
-    train_and_predict(args.model, args.train, args.test, args.validation)
+    train_and_predict(args.model, args.train, args.test, args.validation,
+                      args.weights)
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ from keras.applications.nasnet import NASNetLarge
 from keras.models import Model
 from keras.layers import Dense, Dropout
 from keras.layers.normalization import BatchNormalization
-from keras.optimizers import RMSprop
+from keras.optimizers import RMSprop, Adam
 from keras.utils import multi_gpu_model
 from utils import CLASSES
 
@@ -23,7 +23,7 @@ def get_gpus(gpus):
     return list(map(int, gpus.split(',')))
 
 
-def get_model(model, **kwargs):
+def get_model(model, weights_path=None):
     """
     Returns compiled keras parallel model ready for training
     and base model that must be used for saving weights
@@ -34,7 +34,7 @@ def get_model(model, **kwargs):
     if model == 'vgg16' or model == 'vgg19':
         return vgg(model)
     if model == 'incresnet':
-        return inception_res_net_v2()
+        return inception_res_net_v2(weights_path)
     if model == 'incv3':
         return inception_v3()
     if model == 'xcept':
@@ -93,7 +93,7 @@ def inception_v3():
     return _compile(base_model.input, output, frozen)
 
 
-def inception_res_net_v2():
+def inception_res_net_v2(weights_path):
     """
     Returns compiled keras model ready for training
     """
@@ -108,7 +108,7 @@ def inception_res_net_v2():
         len(CLASSES), activation='softmax',
         name='predictions')(base_model.output)
 
-    return _compile(base_model.input, output, frozen)
+    return _compile(base_model.input, output, frozen, weights_path)
 
 
 def xception():
@@ -183,26 +183,30 @@ def nasnet():
     return _compile(base_model.input, output, frozen)
 
 
-def _compile(input, output, frozen):
+def _compile(input, output, frozen, weights_path=None):
     gpus = get_gpus(environ['CUDA_VISIBLE_DEVICES'])
     if len(gpus) == 1:
         with K.tf.device('/gpu:{}'.format(gpus[0])):
             model = Model(input, output)
             for layer in model.layers[:frozen]:
                 layer.trainable = False
+            if weights_path:
+                model.load_weights(weights_path)
             parallel_model = model
     else:
         with K.tf.device('/cpu:0'):
             model = Model(input, output)
             for layer in model.layers[:frozen]:
                 layer.trainable = False
+            if weights_path:
+                model.load_weights(weights_path)
         # gpus=len(gpus) - simple workaround for reassigned GPUs ids.
         # While passing CUDA_VISIBLE_DEVICES as environment variable
         # it is assumed that all specified GPUs will be used during training
         parallel_model = multi_gpu_model(model, gpus=len(gpus))
     parallel_model.compile(
         loss='categorical_crossentropy',
-        optimizer=RMSprop(lr=0.001),
-        # optimizer=Adam(lr=0.001, decay=0.0001),
+        # optimizer=RMSprop(lr=0.0001),
+        optimizer=Adam(lr=0.0001, decay=0.01),
         metrics=['accuracy', 'top_k_categorical_accuracy'])
     return parallel_model, model
