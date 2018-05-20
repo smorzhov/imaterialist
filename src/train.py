@@ -118,10 +118,11 @@ def train_and_predict(model_type,
             ModelCheckpoint(
                 path.join(MODELS_PATH, model_type +
                           '.{epoch:02d}-{val_loss:.4f}-{val_acc:.4f}.hdf5'),
+                monitor='val_acc',
                 save_weights_only=True,
                 save_best_only=True),
             ReduceLROnPlateau(
-                monitor='val_acc', factor=0.2, patience=3, min_lr=0.0000001),
+                monitor='val_loss', factor=0.2, patience=3, min_lr=0.0000001),
             TerminateOnNaN()
         ],
         max_queue_size=100,
