@@ -82,7 +82,7 @@ def train_and_predict(model_type,
         horizontal_flip=True,
         vertical_flip=True,
         fill_mode='nearest',
-        validation_split=0.1)
+        validation_split=0.2)
     test_datagen = ImageDataGenerator(rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -91,7 +91,7 @@ def train_and_predict(model_type,
         seed=42,
         subset='training',
         **config[model_type]['flow_generator'])
-    validation_generator = test_datagen.flow_from_directory(
+    validation_generator = train_datagen.flow_from_directory(
         train_path,
         # validation_path,
         classes=CLASSES,
@@ -109,7 +109,7 @@ def train_and_predict(model_type,
     parallel_model, model = get_model(
         model=model_type, weights_path=weights_path)
     print('Training model')
-    print(model.summary())
+    # print(model.summary())
     history = parallel_model.fit_generator(
         train_generator,
         validation_data=validation_generator,
@@ -122,7 +122,7 @@ def train_and_predict(model_type,
                 save_weights_only=True,
                 save_best_only=True),
             ReduceLROnPlateau(
-                monitor='val_loss', factor=0.2, patience=3, min_lr=0.0000001),
+                monitor='val_loss', factor=0.5, patience=3, min_lr=0.0000001),
             TerminateOnNaN()
         ],
         max_queue_size=100,
